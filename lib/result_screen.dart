@@ -1,34 +1,38 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:praktikum_android_7m/datas/question.dart';
+import 'package:praktikum_android_7m/models/quiz_question.dart';
 import 'package:praktikum_android_7m/question_summary.dart';
 
 class ResultScreen extends StatelessWidget {
   const ResultScreen({
     super.key,
-    required this.choosenAnswers,
+    required this.chosenAnswers, 
     required this.onRestart,
+    required this.questions, 
   });
 
-  final List<String> choosenAnswers;
-  final VoidCallback onRestart;
+  final List<String> chosenAnswers;
+  final void Function() onRestart;
+  final List<QuizQuestion> questions;
 
   List<Map<String, Object>> getSummaryData() {
     final List<Map<String, Object>> summary = [];
 
-    for (var i = 0; i < choosenAnswers.length; i++) {
-      summary.add({
-        'question_index': i,
-        'question': questions[i].text,
-        'correct_answer': questions[i].answers[0],
-        'user_answer': choosenAnswers[i],
-      });
+    for (var i = 0; i < chosenAnswers.length; i++) {
+      summary.add(
+        {
+          'question_index': i,
+          'question': questions[i].text,
+          'correct_answer': questions[i].answers[0], 
+          'user_answer': chosenAnswers[i]
+        },
+      );
     }
-
     return summary;
   }
 
   @override
-  Widget build(context) {
+  Widget build(BuildContext context) {
     final summaryData = getSummaryData();
     final numTotalQuestions = questions.length;
     final numCorrectQuestions = summaryData.where((data) {
@@ -39,23 +43,30 @@ class ResultScreen extends StatelessWidget {
       width: double.infinity,
       child: Container(
         margin: const EdgeInsets.all(40),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'You answered $numCorrectQuestions out of $numTotalQuestions Questions correctly !',
-              style: TextStyle(color: Colors.white, fontSize: 22),
-            ),
-            const SizedBox(height: 30),
-            QuestionSummary(getSummaryData()),
-            const SizedBox(height: 30),
-            TextButton.icon(
-              onPressed: onRestart,
-              style: TextButton.styleFrom(foregroundColor: Colors.white),
-              icon: const Icon(Icons.refresh),
-              label: const Text('Restart Quiz!'),
-            ),
-          ],
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'You Answered $numCorrectQuestions out of $numTotalQuestions correctly !',
+                style: const TextStyle(color: Colors.white,fontSize: 22,),
+              ),
+              const SizedBox(
+                height: 30,
+              ),
+              QuestionsSummary(getSummaryData()),
+              const SizedBox(
+                height: 30,
+              ),
+              TextButton(
+                onPressed: onRestart,
+                child: const Text(
+                  'Restart Quiz',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

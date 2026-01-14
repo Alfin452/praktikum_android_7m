@@ -1,35 +1,37 @@
 import 'package:flutter/material.dart';
-import 'package:praktikum_android_7m/answer_button.dart';
-import 'package:praktikum_android_7m/datas/question.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:praktikum_android_7m/answer_button.dart';
+import 'package:praktikum_android_7m/models/quiz_question.dart';
 
-class QuizScreen extends StatefulWidget {
-  const QuizScreen({
+class QuestionsScreen extends StatefulWidget {
+  const QuestionsScreen({
     super.key,
-    required this.onSelectAnswer,
-    });
+    required this.onSelectedAnswer,
+    required this.questions,
+  });
 
-  final void Function(String answer) onSelectAnswer;
+  final void Function(String answer) onSelectedAnswer;
+  final List<QuizQuestion> questions;
 
   @override
-  State<QuizScreen> createState() {
-    return _QuizScreenState();
+  State<QuestionsScreen> createState() {
+    return _QuestionsScreenState();
   }
 }
 
-class _QuizScreenState extends State<QuizScreen> {
+class _QuestionsScreenState extends State<QuestionsScreen> {
   var currentQuestionIndex = 0;
 
   void answerQuestion(String selectedAnswer) {
-    widget.onSelectAnswer(selectedAnswer);
+    widget.onSelectedAnswer(selectedAnswer);
     setState(() {
       currentQuestionIndex++;
     });
   }
 
   @override
-  Widget build(context) {
-    final currentQuestion = questions[currentQuestionIndex];
+  Widget build(BuildContext context) {
+    final currentQuestion = widget.questions[currentQuestionIndex];
 
     return SizedBox(
       width: double.infinity,
@@ -49,7 +51,9 @@ class _QuizScreenState extends State<QuizScreen> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 30),
-            ...currentQuestion.getShuffledAnswer().map((item) {
+            // Pastikan nama fungsi di model Anda 'getShuffledAnswer' atau 'getShuffledAnswers'
+            ...currentQuestion.getShuffledAnswer().map(
+              (item) {
               return Container(
                 margin: const EdgeInsets.all(5),
                 child: AnswerButton(

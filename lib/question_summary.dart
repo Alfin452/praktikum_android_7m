@@ -8,24 +8,17 @@ class QuestionsSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: summaryData.map((data) {
-        return Row(
-          children: [
-            Text(((data['question_index'] as int) + 1).toString()),
-            Expanded(
-              child: Column(
-                children: [
-                  Text(data['question'] as String),
-                  const SizedBox(height: 5), // SizedBox
-                  Text(data['user_answer'] as String),
-                  Text(data['correct_answer'] as String),
-                ],
-              ), // Column
-            ), // Expanded
-          ],
-        ); // Row
-      }).toList(),
-    ); // Column
+    // PERBAIKAN: Menambahkan SizedBox dan SingleChildScrollView agar bisa di-scroll
+    return SizedBox(
+      height: 400,
+      child: SingleChildScrollView(
+        child: Column(
+          children: summaryData.map((data) {
+            // PERBAIKAN: Menggunakan widget SummaryItem agar import tidak error
+            return SummaryItem(data);
+          }).toList(),
+        ),
+      ),
+    );
   }
 }

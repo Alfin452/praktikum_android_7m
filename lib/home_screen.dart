@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen(this.startQuiz, {super.key});
+  const HomeScreen({required this.startQuiz,required this.profile, super.key});
 
   final void Function() startQuiz;
+  final void Function() profile;
+
 
   @override
   Widget build(context) {
