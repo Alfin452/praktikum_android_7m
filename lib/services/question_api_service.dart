@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../models/quiz_question.dart';
+import 'package:praktikum_android_7m/models/quiz_question.dart';
 
 class QuestionApiService {
   static const String baseUrl =
@@ -25,10 +25,9 @@ class QuestionApiService {
         if (data['success'] == true && data['data'] != null) {
           final List<dynamic> questionsJson = data['data'];
           return questionsJson.map((questionJson) {
-            // Parse options array and extract option_text from each object
             final List<dynamic> optionsJson = questionJson['options'] as List;
 
-            // Sort options so the correct answer (is_correct: true) comes first
+            // Sort agar jawaban benar ada di indeks 0 (untuk pengecekan nanti)
             optionsJson.sort((a, b) {
               if (a['is_correct'] == true) return -1;
               if (b['is_correct'] == true) return 1;
@@ -42,12 +41,13 @@ class QuestionApiService {
             return QuizQuestion(
               id: questionJson['id'] as int,
               text: questionJson['question_text'] as String,
-              answer: options,
+              answers: options, // Sesuaikan dengan nama field di model
             );
           }).toList();
         } else {
           throw Exception(
-              'Failed to load questions: API returned unsuccessful response');
+            'Failed to load questions: API returned unsuccessful response',
+          );
         }
       } else {
         throw Exception('Failed to load questions: ${response.statusCode}');

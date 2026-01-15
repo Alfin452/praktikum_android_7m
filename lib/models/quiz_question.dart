@@ -1,14 +1,15 @@
 class QuizQuestion {
-  const QuizQuestion(
+  const QuizQuestion({
     required this.id,
     required this.text,
-    required this.answer,
-    );
+    required this.answers,
+  });
 
+  final int id;
   final String text;
   final List<String> answers;
 
-  List<String> getShuffledAnswer() {
+  List<String> getShuffledAnswers() {
     final shuffledList = List.of(answers);
     shuffledList.shuffle();
     return shuffledList;

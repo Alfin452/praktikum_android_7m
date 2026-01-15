@@ -5,6 +5,7 @@ import 'package:praktikum_android_7m/question_screen.dart';
 import 'package:praktikum_android_7m/result_screen.dart';
 import 'package:praktikum_android_7m/services/question_api_service.dart';
 import 'package:praktikum_android_7m/models/quiz_question.dart';
+import 'package:praktikum_android_7m/models/user_answer.dart'; // Import model baru
 
 class Quiz extends StatefulWidget {
   const Quiz({super.key});
@@ -17,20 +18,44 @@ class Quiz extends StatefulWidget {
 
 class _QuizState extends State<Quiz> {
   var activeScreen = 'start-screen';
-  List<String> selectedAnswer = [];
+  List<UserAnswer> selectedAnswers = []; // Ubah tipe data menjadi UserAnswer
   List<QuizQuestion> questions = [];
   bool isLoading = false;
+  bool isSubmitting = false; // State untuk proses submit
   String? errorMessage;
 
-  void chooseAnswer(String answer) {
-    selectedAnswer.add(answer);
+  // Fungsi chooseAnswer sekarang async karena melakukan submit ke API
+  Future<void> chooseAnswer(int questionId, String answer) async {
+    selectedAnswers.add(UserAnswer(questionId: questionId, answer: answer));
 
-    if (selectedAnswer.length == questions.length) {
+    if (selectedAnswers.length == questions.length) {
       setState(() {
-        activeScreen = 'result-screen';
+        isSubmitting = true; // Tampilkan loading saat submit
       });
+
+      try {
+        final apiService = QuestionApiService();
+        // Konversi List<UserAnswer> ke List<Map> untuk dikirim via JSON
+        final answersJson = selectedAnswers.map((a) => a.toJson()).toList();
+
+        await apiService.submitAnswers(answersJson);
+
+        // Jika sukses, pindah ke layar hasil
+        setState(() {
+          activeScreen = 'result-screen';
+          isSubmitting = false;
+        });
+      } catch (e) {
+        // Jika gagal, tetap tampilkan hasil tapi log error (atau tampilkan snackbar)
+        print('Failed to submit answers: $e');
+        setState(() {
+          activeScreen = 'result-screen';
+          isSubmitting = false;
+        });
+      }
     }
   }
+
   Future<void> switchScreen() async {
     setState(() {
       isLoading = true;
@@ -53,9 +78,10 @@ class _QuizState extends State<Quiz> {
       });
     }
   }
+
   Future<void> restartQuiz() async {
     setState(() {
-      selectedAnswer = [];
+      selectedAnswers = [];
       isLoading = true;
       errorMessage = null;
     });
@@ -76,19 +102,32 @@ class _QuizState extends State<Quiz> {
       });
     }
   }
+
   void profileScreen() {
     setState(() {
-      selectedAnswer = [];
+      selectedAnswers = [];
       activeScreen = 'profile-screen';
     });
   }
+
   @override
   Widget build(context) {
     Widget screenWidget;
 
-    if (isLoading) {
-      screenWidget = const Center(
-        child: CircularProgressIndicator(color: Colors.white),
+    if (isLoading || isSubmitting) {
+      // Handle loading saat fetch atau submit
+      final loadingText = isSubmitting
+          ? 'Submitting answers...'
+          : 'Loading questions...';
+      screenWidget = Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const CircularProgressIndicator(color: Colors.white),
+            const SizedBox(height: 20),
+            Text(loadingText, style: const TextStyle(color: Colors.white)),
+          ],
+        ),
       );
     } else if (errorMessage != null) {
       screenWidget = Center(
@@ -107,6 +146,7 @@ class _QuizState extends State<Quiz> {
                 onPressed: () {
                   setState(() {
                     errorMessage = null;
+                    activeScreen = 'start-screen'; // Kembali ke awal jika error
                   });
                 },
                 child: const Text('Back'),
@@ -121,17 +161,18 @@ class _QuizState extends State<Quiz> {
         profile: profileScreen,
       );
     }
-    if (!isLoading && errorMessage == null) {
+
+    if (!isLoading && !isSubmitting && errorMessage == null) {
       if (activeScreen == 'questions-screen') {
         screenWidget = QuestionsScreen(
-          onSelectedAnswer: chooseAnswer, 
+          onSelectedAnswer: chooseAnswer,
           questions: questions,
         );
       }
 
       if (activeScreen == 'result-screen') {
         screenWidget = ResultScreen(
-          chosenAnswers: selectedAnswer, 
+          chosenAnswers: selectedAnswers,
           onRestart: restartQuiz,
           questions: questions,
         );

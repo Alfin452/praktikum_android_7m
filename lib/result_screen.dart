@@ -1,17 +1,17 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:praktikum_android_7m/models/quiz_question.dart';
+import 'package:praktikum_android_7m/models/user_answer.dart'; // Import model
 import 'package:praktikum_android_7m/question_summary.dart';
 
 class ResultScreen extends StatelessWidget {
   const ResultScreen({
     super.key,
-    required this.chosenAnswers, 
+    required this.chosenAnswers,
     required this.onRestart,
-    required this.questions, 
+    required this.questions,
   });
 
-  final List<String> chosenAnswers;
+  final List<UserAnswer> chosenAnswers; // Tipe data berubah
   final void Function() onRestart;
   final List<QuizQuestion> questions;
 
@@ -19,14 +19,19 @@ class ResultScreen extends StatelessWidget {
     final List<Map<String, Object>> summary = [];
 
     for (var i = 0; i < chosenAnswers.length; i++) {
-      summary.add(
-        {
-          'question_index': i,
-          'question': questions[i].text,
-          'correct_answer': questions[i].answers[0], 
-          'user_answer': chosenAnswers[i]
-        },
+      // Cari pertanyaan yang sesuai dengan ID di jawaban user (untuk keamanan, meski urutan index biasanya sama)
+      final question = questions.firstWhere(
+        (q) => q.id == chosenAnswers[i].questionId,
+        orElse: () => questions[i],
       );
+
+      summary.add({
+        'question_index': i,
+        'question': question.text,
+        'correct_answer': question
+            .answers[0], // Jawaban benar selalu index 0 (karena API sort)
+        'user_answer': chosenAnswers[i].answer,
+      });
     }
     return summary;
   }
@@ -49,15 +54,12 @@ class ResultScreen extends StatelessWidget {
             children: [
               Text(
                 'You Answered $numCorrectQuestions out of $numTotalQuestions correctly !',
-                style: const TextStyle(color: Colors.white,fontSize: 22,),
+                style: const TextStyle(color: Colors.white, fontSize: 22),
+                textAlign: TextAlign.center,
               ),
-              const SizedBox(
-                height: 30,
-              ),
-              QuestionsSummary(getSummaryData()),
-              const SizedBox(
-                height: 30,
-              ),
+              const SizedBox(height: 30),
+              QuestionsSummary(summaryData),
+              const SizedBox(height: 30),
               TextButton(
                 onPressed: onRestart,
                 child: const Text(

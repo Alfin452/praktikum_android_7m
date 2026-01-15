@@ -23,9 +23,7 @@ class ProfileData {
   });
 
   factory ProfileData.fromJson(Map<String, dynamic> json) {
-    print('Parsing ProfileData from: $json');
-
-    // Handle nested structure: {user: {...}, quiz_statistics: {...}}
+    // Penanganan struktur data yang mungkin bersarang (nested)
     if (json.containsKey('user') && json['user'] is Map<String, dynamic>) {
       final user = json['user'] as Map<String, dynamic>;
       final quizStats = json['quiz_statistics'] as Map<String, dynamic>?;
@@ -45,24 +43,16 @@ class ProfileData {
       );
     }
 
-    // Handle flat structure (fallback)
+    // Fallback untuk struktur flat (jika API berubah)
     return ProfileData(
-      nama: json['nama'] ?? json['name'] ?? '',
+      nama: json['name'] ?? '',
       email: json['email'] ?? '',
-      npm: json['npm'] ?? json['npm_id'] ?? json['student_id'] ?? '',
-      tempatTglLahir:
-          json['tempat_tgl_lahir'] ??
-          json['tempat_lahir'] ??
-          json['birth_place_date'] ??
-          '',
-      alamat: json['alamat'] ?? json['address'] ?? '',
-      jenisKelamin:
-          json['jenis_kelamin'] ?? json['gender'] ?? json['sex'] ?? '',
-      totalSubmit:
-          json['total_submit'] ?? json['total_quiz'] ?? json['quiz_count'] ?? 0,
-      rataRataNilai: json['rata_rata_nilai'] != null
-          ? (json['rata_rata_nilai'] as num).toDouble()
-          : json['average_score'] != null
+      npm: json['npm'] ?? '',
+      tempatTglLahir: json['birth_place_date'] ?? '',
+      alamat: json['address'] ?? '',
+      jenisKelamin: json['gender'] ?? '',
+      totalSubmit: json['total_quiz'] ?? 0,
+      rataRataNilai: json['average_score'] != null
           ? (json['average_score'] as num).toDouble()
           : 0.0,
     );
@@ -76,8 +66,6 @@ class ProfileApiService {
 
   Future<ProfileData> fetchProfile() async {
     try {
-      print('Fetching profile from: $profileUrl');
-
       final response = await http.get(
         Uri.parse(profileUrl),
         headers: {
@@ -86,49 +74,22 @@ class ProfileApiService {
         },
       );
 
-      print('Response status code: ${response.statusCode}');
-      print('Response body: ${response.body}');
-
       if (response.statusCode == 200) {
         final dynamic responseData = json.decode(response.body);
-        print('Parsed data: $responseData');
 
         if (responseData is Map<String, dynamic>) {
-          final Map<String, dynamic> data = responseData;
-
-          // Format 1: {success: true, data: {...}}
-          if (data['success'] == true && data['data'] != null) {
-            print('Parsing with format 1: success + data');
-            return ProfileData.fromJson(data['data']);
+          if (responseData['success'] == true && responseData['data'] != null) {
+            return ProfileData.fromJson(responseData['data']);
+          } else if (responseData.containsKey('nama') ||
+              responseData.containsKey('user')) {
+            return ProfileData.fromJson(responseData);
           }
-
-          // Format 2: {success: false/missing, data: {...}}
-          if (data['data'] != null && data['data'] is Map<String, dynamic>) {
-            print('Parsing with format 2: data without success check');
-            return ProfileData.fromJson(data['data']);
-          }
-
-          // Format 3: Direct profile data without wrapper
-          if (data.containsKey('nama') ||
-              data.containsKey('email') ||
-              data.containsKey('npm')) {
-            print('Parsing with format 3: direct profile data');
-            return ProfileData.fromJson(data);
-          }
-
-          throw Exception(
-            'Failed to fetch profile: API returned unsuccessful response - ${data['message'] ?? 'Unknown error'}',
-          );
-        } else {
-          throw Exception(
-            'Failed to fetch profile: Unexpected response format',
-          );
         }
+        throw Exception('Failed to fetch profile: Invalid data format');
       } else {
         throw Exception('Failed to fetch profile: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error fetching profile: $e');
       throw Exception('API Error: $e');
     }
   }
